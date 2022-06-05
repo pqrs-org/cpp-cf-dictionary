@@ -1,2 +1,4 @@
 boost-ext/ut
 pqrs-org/cpp-cf-cf_ptr
+pqrs-org/cpp-cf-number
+pqrs-org/cpp-cf-string
