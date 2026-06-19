@@ -3,7 +3,7 @@
 #include <pqrs/cf/number.hpp>
 #include <pqrs/cf/string.hpp>
 
-int main(void) {
+int main() {
   using namespace boost::ut;
   using namespace boost::ut::literals;
 
@@ -36,27 +36,34 @@ int main(void) {
     };
 
     {
-      auto dictionary = CFDictionaryCreate(kCFAllocatorDefault,
-                                           keys,
-                                           values,
-                                           2,
-                                           &kCFTypeDictionaryKeyCallBacks,
-                                           &kCFTypeDictionaryValueCallBacks);
+      auto dictionary = pqrs::cf::adopt_cf_ptr(CFDictionaryCreate(kCFAllocatorDefault,
+                                                                  keys,
+                                                                  values,
+                                                                  2,
+                                                                  &kCFTypeDictionaryKeyCallBacks,
+                                                                  &kCFTypeDictionaryValueCallBacks));
       expect(dictionary);
-      expect(CFGetRetainCount(dictionary) == 1);
-      expect(CFDictionaryGetCount(dictionary) == 2);
+      expect(CFGetRetainCount(*dictionary) == 1);
+      expect(CFDictionaryGetCount(*dictionary) == 2);
 
-      auto v = reinterpret_cast<CFTypeRef>(CFDictionaryGetValue(dictionary, *s1));
+      auto v = reinterpret_cast<CFTypeRef>(CFDictionaryGetValue(*dictionary, *s1));
       expect(v);
       expect(pqrs::cf::make_number<int>(v) == 1);
 
-      auto copy = pqrs::cf::make_cf_mutable_dictionary_copy(dictionary);
+      auto copy = pqrs::cf::make_cf_mutable_dictionary_copy(*dictionary);
       expect(copy);
       expect(CFGetRetainCount(*copy) == 1);
       expect(CFDictionaryGetCount(*copy) == 2);
 
-      CFRelease(dictionary);
+      CFDictionarySetValue(*copy, CFSTR("s3"), CFSTR("value3"));
+      expect(CFDictionaryGetCount(*copy) == 3);
+      expect(CFDictionaryGetCount(*dictionary) == 2);
     }
+  };
+
+  "noexcept"_test = [] {
+    expect(noexcept(pqrs::cf::make_cf_mutable_dictionary()));
+    expect(noexcept(pqrs::cf::make_cf_mutable_dictionary_copy(nullptr)));
   };
 
   return 0;
